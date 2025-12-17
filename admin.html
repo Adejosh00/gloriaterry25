@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Admin Login</h2>
+
+<div id="login">
+  <input id="email" type="email" placeholder="Admin Email">
+  <br>
+  <input id="password" type="password" placeholder="Password">
+  <br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" style="display:none">
+  <h2>Manage Images</h2>
+  <div id="gallery" class="gallery"></div>
+</div>
+
+<!-- Supabase Config -->
+<script src="supabase.js"></script>
+
+<script>
+async function login() {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
+  });
+
+  if (error) {
+    alert(error.message);
+  } else {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadImages();
+  }
+}
+
+async function loadImages() {
+  const { data } = await supabase.from("images").select("*");
+
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
+  data.forEach(img => {
+    gallery.innerHTML += `
+      <div class="card">
+        <img src="${img.image_url}">
+        <button onclick="deleteImage('${img.id}')">X</button>
+      </div>
+    `;
+  });
+}
+
+async function deleteImage(id) {
+  await supabase.from("images").delete().eq("id", id);
+  loadImages();
+}
+</script>
+
+</body>
+</html>
 
