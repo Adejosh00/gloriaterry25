@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Supabase v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gloterry Image Gallery</title>
+
   <style>
     html, body {
       height: 100%;
@@ -22,64 +25,34 @@
       min-height: 100vh;
     }
 
-    @media (max-width: 600px) {
-      body {
-        padding: 20px 10px;
-        background-position: center center;
-        background-size: cover;
-        min-height: 100vh;
-      }
-    }
-
     h1 {
       font-size: 65px;
       font-weight: 900;
       letter-spacing: 4px;
       text-transform: uppercase;
       margin-bottom: 35px;
-      color: white;
       font-family: 'Lucida Handwriting', cursive;
     }
 
     h1 span {
       font-size: 28px;
-      font-family: 'Lucida Handwriting', cursive;
-      font-weight: 400;
-      letter-spacing: 1.5px;
       display: block;
       margin-top: -10px;
       text-transform: lowercase;
     }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 40px;
-      }
-      h1 span {
-        font-size: 18px;
-        margin-top: -6px;
-      }
-    }
-
     .upload-label {
       display: inline-block;
       background: rgba(128, 0, 32, 0.85);
-      color: white;
       padding: 12px 25px;
       border-radius: 8px;
       cursor: pointer;
-      margin-bottom: 5px;
-      transition: background 0.3s ease;
+      margin-bottom: 10px;
       font-weight: 600;
-      user-select: none;
     }
 
-    .upload-label:hover {
-      background: rgba(128, 0, 32, 1);
-    }
-
-    #fileInput { 
-      display: none; 
+    #fileInput {
+      display: none;
     }
 
     #errorMsg {
@@ -87,7 +60,6 @@
       font-weight: bold;
       margin-bottom: 20px;
       height: 1.2em;
-      user-select: none;
     }
 
     .gallery {
@@ -97,8 +69,6 @@
       justify-items: center;
     }
 
-    /* Removed 4-column override on mobile */
-
     .gallery img {
       width: 180px;
       height: 180px;
@@ -106,14 +76,13 @@
       border-radius: 15px;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
       outline: 2.5px solid white;
       outline-offset: -4px;
+      transition: transform 0.25s ease;
     }
 
     .gallery img:hover {
       transform: scale(1.06);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.4);
     }
 
     .popup {
@@ -122,31 +91,24 @@
       visibility: hidden;
       pointer-events: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
+      inset: 0;
+      background: rgba(0,0,0,0.85);
       justify-content: center;
       align-items: center;
       z-index: 1000;
-      transform: scale(0.8);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: opacity 0.3s ease;
     }
 
     .popup.active {
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      transform: scale(1);
     }
 
     .popup img {
       max-width: 90vw;
       max-height: 90vh;
-      object-fit: contain;
       border-radius: 10px;
-      box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
     }
 
     .close {
@@ -154,19 +116,19 @@
       top: 20px;
       right: 30px;
       font-size: 40px;
-      color: white;
       cursor: pointer;
       font-weight: bold;
-      user-select: none;
     }
   </style>
 </head>
+
 <body>
+
   <h1>Gloterry'25<br><span>wedding picture galleries</span></h1>
 
   <label for="fileInput" class="upload-label">Upload Images</label>
   <input type="file" id="fileInput" accept="image/*" multiple />
-  
+
   <div id="errorMsg"></div>
 
   <div class="gallery" id="gallery"></div>
@@ -177,32 +139,82 @@
   </div>
 
   <script>
-    <script>
-  // Replace these with your actual Supabase credentials
-  const SUPABASE_URL = 'https://xyzcompany.supabase.co'; // Your project URL
-  const SUPABASE_ANON_KEY = 'your-anon-public-key'; // Your anon public API key
+    // 🔑 REPLACE WITH YOUR REAL SUPABASE VALUES
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
 
-  // Initialize Supabase client
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
 
-  // Example: Fetch data from a table called 'todos'
-  async function fetchTodos() {
-    let { data, error } = await supabase
-      .from('todos')
-      .select('*');
+    const gallery = document.getElementById("gallery");
+    const fileInput = document.getElementById("fileInput");
+    const errorMsg = document.getElementById("errorMsg");
 
-    if (error) {
-      console.error('Error fetching todos:', error);
-    } else {
-      console.log('Todos:', data);
-      // You can update your page here with the data
+    // Load images on page load
+    async function loadImages() {
+      const { data, error } = await supabase
+        .from("images")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        errorMsg.textContent = "Failed to load images";
+        return;
+      }
+
+      gallery.innerHTML = "";
+      data.forEach(img => {
+        const image = document.createElement("img");
+        image.src = img.image_url;
+        image.onclick = () => openPopup(img.image_url);
+        gallery.appendChild(image);
+      });
     }
-  }
 
-  fetchTodos();
-</script>
+    // Upload images (public)
+    fileInput.addEventListener("change", async () => {
+      errorMsg.textContent = "";
 
-   
+      for (const file of fileInput.files) {
+        if (!file.type.startsWith("image/")) continue;
+
+        const fileName = Date.now() + "_" + file.name;
+
+        const { error: uploadError } = await supabase.storage
+          .from("gallery")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          errorMsg.textContent = "Upload failed";
+          return;
+        }
+
+        const { data } = supabase.storage
+          .from("gallery")
+          .getPublicUrl(fileName);
+
+        await supabase.from("images").insert({
+          image_url: data.publicUrl
+        });
+      }
+
+      loadImages();
+    });
+
+    // Popup view
+    function openPopup(src) {
+      document.getElementById("popupImg").src = src;
+      document.getElementById("popup").classList.add("active");
+    }
+
+    document.querySelector(".close").onclick = () => {
+      document.getElementById("popup").classList.remove("active");
+    };
+
+    loadImages();
   </script>
+
 </body>
 </html>
