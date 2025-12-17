@@ -202,63 +202,7 @@
   fetchTodos();
 </script>
 
-    const fileInput = document.getElementById('fileInput');
-    const gallery = document.getElementById('gallery');
-    const popup = document.getElementById('popup');
-    const popupImg = document.getElementById('popupImg');
-    const closeBtn = document.querySelector('.close');
-    const errorMsg = document.getElementById('errorMsg');
-
-    const uploadedImages = new Set();
-
-    fileInput.addEventListener('change', function () {
-      const files = this.files;
-      if (files.length) {
-        Array.from(files).forEach(file => {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            const src = e.target.result;
-
-            if (uploadedImages.has(src)) {
-              showError("Already uploaded");
-              return;
-            }
-
-            uploadedImages.add(src);
-
-            const img = document.createElement('img');
-            img.src = src;
-            img.alt = file.name;
-            img.onclick = () => {
-              popupImg.src = src;
-              popup.classList.add('active');
-            };
-            gallery.appendChild(img);
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-    });
-
-    function showError(message) {
-      errorMsg.textContent = message;
-      setTimeout(() => {
-        errorMsg.textContent = "";
-      }, 3000);
-    }
-
-    function closePopup() {
-      popup.classList.remove('active');
-      setTimeout(() => {
-        popupImg.src = "";
-      }, 300);
-    }
-
-    popup.addEventListener('click', (e) => {
-      if (e.target === popup || e.target === closeBtn) {
-        closePopup();
-      }
-    });
+   
   </script>
 </body>
 </html>
